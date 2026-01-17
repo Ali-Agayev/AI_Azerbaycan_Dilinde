@@ -1,0 +1,91 @@
+/* --- SideBar (Yan Panel) Stilleri --- */
+
+.new-chat {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    /* İkon və mətn arasındakı məsafə */
+    background-color: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 10px 12px;
+    border-radius: 8px;
+    /* Künclərin yumşaldılması */
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.new-chat:hover {
+    background-color: #2f2f2f;
+    /* Siçan üzərinə gəldikdə rəngin dəyişməsi */
+}
+
+.sidebar-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 12px;
+}
+
+/* --- Əsas Çat Sahəsi --- */
+
+.top-bar {
+    padding: 12px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    background-color: #212121;
+    z-index: 10;
+}
+
+.model-selector {
+    font-weight: 600;
+    font-size: 18px;
+    color: #ececec;
+}
+
+.welcome-screen {
+    height: 60%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.welcome-screen h1 {
+    font-size: 32px;
+    color: #ececec;
+}
+
+/* --- Məlumat və Xəbərdarlıq Sahəsi --- */
+
+.disclaimer {
+    font-size: 12px;
+    color: #acacbe;
+    text-align: center;
+    margin-top: 12px;
+}
+
+/* Yazır... animasiyası üçün effekt */
+.typing-indicator span {
+    height: 8px;
+    width: 8px;
+    background: #acacbe;
+    display: inline-block;
+    border-radius: 50%;
+    margin-right: 4px;
+    animation: typing 1s infinite ease-in-out;
+}
+
+@keyframes typing {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-5px);
+    }
+}
