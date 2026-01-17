@@ -39,4 +39,4 @@ Bu model "Attention is All You Need" məqaləsindəki orijinal Transformer arxit
 Bu layihə açıq mənbəlidir. İstədiyiniz kimi paylaşıb inkişaf etdirə bilərsiniz.
 
 ---
-**İsmayıl AI** - Azərbaycanın rəqəmsal gələcəyi üçün gic bir başlanğıc! 🚀🌻
+**İsmayıl AI** - Azərbaycanın rəqəmsal gələcəyi üçün güclü bir başlanğıc! 🚀🌻
