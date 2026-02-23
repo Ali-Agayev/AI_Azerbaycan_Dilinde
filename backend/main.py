@@ -1,22 +1,27 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import List
 import uvicorn
 import torch
 import os
+from pathlib import Path
 from model import IsmayilModeli # Bizim yeni model sinfi
 from tokenizer import CharTokenizator # Bizim yeni tokenizator sinfi
+from kaggle_client import is_gondər, is_veziyyeti, is_siyahisi
 
 # FastAPI tətbiqini yaradırıq
 ismayil_server = FastAPI(title="İsmayılın Şəxsi AI Serveri")
 
-# CORS tənzimləmələri (Frontendin backend ilə danışmasına icazə vermək üçün)
+# CORS tənzimləmələri
+# FRONTEND_URL env var-ı Railway + Vercel birlikdə istifadə üçün
+_frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:5173")
 ismayil_server.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Bütün mənbələrə icazə veririk
+    allow_origins=[_frontend_url, "http://localhost:5173", "http://localhost:3000"],
     allow_credentials=True,
-    allow_methods=["*"], # Bütün metodlara (GET, POST və s.) icazə veririk
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
@@ -99,6 +104,106 @@ async def chat_cavabi(istek: ChatIsteyi):
     except Exception as xata:
         raise HTTPException(status_code=500, detail=str(xata))
 
+# ═══════════════════════════════════════════════════════════
+# 🎬 VİDEO DÜZƏLTMƏ ENDPOINT-LƏRİ (Kaggle + Stable Diffusion)
+# ═══════════════════════════════════════════════════════════
+
+@ismayil_server.post("/video/edit")
+async def video_duzelт(
+    video: UploadFile = File(..., description="Düzəldiləcək video fayl (mp4, avi, mov)"),
+    prompt: str = Form(..., description="Necə görünsün? Məs: 'oil painting style, colorful'")
+):
+    """
+    Video faylı və prompt qəbul edib Kaggle-a emal üçün göndərir.
+    Dərhal iş ID-si qaytarır — status-u /video/status/{job_id} ilə izləyin.
+    """
+    # Fayl növünü yoxlayırıq
+    icaze_verilmis = {"video/mp4", "video/avi", "video/quicktime", "video/x-msvideo"}
+    if video.content_type and video.content_type not in icaze_verilmis:
+        # Content-type həmişə dəqiq olmur, buna görə adını da yoxlayırıq
+        ad = (video.filename or "").lower()
+        if not any(ad.endswith(x) for x in [".mp4", ".avi", ".mov", ".mkv"]):
+            raise HTTPException(
+                status_code=400,
+                detail="Yalnız video faylları (mp4, avi, mov, mkv) qəbul edilir."
+            )
+    
+    # Video məzmununu oxuyuruq
+    video_bytes = await video.read()
+    
+    if len(video_bytes) == 0:
+        raise HTTPException(status_code=400, detail="Boş fayl göndərildi.")
+    
+    # Maksimum ölçü yoxlanışı (500 MB)
+    max_olchu = 500 * 1024 * 1024
+    if len(video_bytes) > max_olchu:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Fayl həddən böyükdür. Maksimum: 500 MB, Göndərilən: {len(video_bytes)//1024//1024} MB"
+        )
+    
+    # Kaggle-a iş göndəririk
+    is_id = is_gondər(
+        video_bytes=video_bytes,
+        prompt=prompt,
+        fayl_adi=video.filename or "video.mp4"
+    )
+    
+    return {
+        "success": True,
+        "job_id": is_id,
+        "message": "Video emal üçün qəbul edildi!",
+        "kaggle_telimat": (
+            f"📋 Kaggle Notebook-a gedin → video_jobs/{is_id}/ qovluğundakı video + prompt.txt fayllarını "
+            f"Kaggle Dataset-ə yükləyin → video_edit_worker.py notebook-unu işlədin → "
+            f"nəticə /kaggle/working/output.mp4-da olacaq"
+        ),
+        "status_url": f"/video/status/{is_id}"
+    }
+
+
+@ismayil_server.get("/video/status/{is_id}")
+async def video_status(is_id: str):
+    """İş vəziyyətini yoxlayır: pending | processing | done | error"""
+    return is_veziyyeti(is_id)
+
+
+@ismayil_server.get("/video/download/{is_id}")
+async def video_yukle(is_id: str):
+    """Tamamlanmış çıxış videosunu yükləməyə imkan verir."""
+    melumat = is_veziyyeti(is_id)
+    
+    if melumat["status"] == "not_found":
+        raise HTTPException(status_code=404, detail="İş tapılmadı")
+    
+    if melumat["status"] != "done":
+        raise HTTPException(
+            status_code=202,
+            detail=f"Video hələ hazır deyil. Cari vəziyyət: {melumat['status']}"
+        )
+    
+    video_yolu = Path("video_jobs") / is_id / "output.mp4"
+    if not video_yolu.exists():
+        raise HTTPException(status_code=404, detail="Çıxış faylı tapılmadı")
+    
+    return FileResponse(
+        path=str(video_yolu),
+        media_type="video/mp4",
+        filename=f"ishayil_ai_video_{is_id}.mp4"
+    )
+
+
+@ismayil_server.get("/video/jobs")
+async def butun_isler():
+    """Bütün video emal işlərinin siyahısı."""
+    return {"jobs": is_siyahisi()}
+
+
 if __name__ == "__main__":
-    # Serveri 8000-ci portda başladırıq
-    uvicorn.run(ismayil_server, host="0.0.0.0", port=8000)
+    # Railway və digər serverlər PORT env variable istifadə edir
+    # Lokal istifadə üçün default 8000
+    port = int(os.environ.get("PORT", 8000))
+    host = "0.0.0.0"  # Bütün interfeysldən qulaq as
+    print(f"🚀 İsmayıl AI server: http://{host}:{port}")
+    print(f"   Kaggle API: {'ENV VARS' if os.environ.get('KAGGLE_KEY') else '~/.kaggle/kaggle.json'}")
+    uvicorn.run(ismayil_server, host=host, port=port)
