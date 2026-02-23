@@ -44,7 +44,7 @@ function App() {
     girisMetniniYenile('');
     yuklenirVeziyyeti(true);
     try {
-      const cavab = await axios.post('http://localhost:8000/v1/chat/completions', {
+      const cavab = await axios.post('https://aiazerbaycandilinde-production.up.railway.app/v1/chat/completions', {
         messages: [{ role: 'user', content: gonderilenMetn }]
       });
       const aiCavabi = cavab.data.choices[0].message.content;
@@ -99,7 +99,7 @@ function App() {
     if (pollingRef.current) clearInterval(pollingRef.current);
     pollingRef.current = setInterval(async () => {
       try {
-        const r = await axios.get(`http://localhost:8000/video/status/${jobId}`);
+        const r = await axios.get(`https://aiazerbaycandilinde-production.up.railway.app/video/status/${jobId}`);
         isVeziyyetiYenile(r.data);
         if (r.data.status === 'done' || r.data.status === 'error') {
           clearInterval(pollingRef.current);
@@ -115,7 +115,7 @@ function App() {
     formData.append('video', secilmisVideo);
     formData.append('prompt', videoPrompt);
     try {
-      const r = await axios.post('http://localhost:8000/video/edit', formData, {
+      const r = await axios.post('https://aiazerbaycandilinde-production.up.railway.app/video/edit', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       const jobId = r.data.job_id;
