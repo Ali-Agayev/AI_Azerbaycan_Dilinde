@@ -4,11 +4,24 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import List
 import uvicorn
-import torch
 import os
 from pathlib import Path
-from model import IsmayilModeli # Bizim yeni model sinfi
-from tokenizer import CharTokenizator # Bizim yeni tokenizator sinfi
+
+# Torch opsionaldir — Railway-də lazim deyil (GPU Kaggle-dadır)
+try:
+    import torch
+    TORCH_VAR = True
+except ImportError:
+    TORCH_VAR = False
+
+# Model və tokenizer opsionaldir — yalnız lokal dev-də işləyir
+try:
+    from model import IsmayilModeli
+    from tokenizer import CharTokenizator
+    MODEL_VAR = True
+except ImportError:
+    MODEL_VAR = False
+
 from kaggle_client import is_gondər, is_veziyyeti, is_siyahisi
 
 # FastAPI tətbiqini yaradırıq
@@ -25,16 +38,18 @@ ismayil_server.add_middleware(
     allow_headers=["*"],
 )
 
-# Qlobal dəyişənlər - Model və Tokenizatoru burada saxlayırıq ki, hər dəfə yükləməyək
-cihaz = 'cuda' if torch.cuda.is_available() else 'cpu'
+# Qlobal dəyişənlər — Model və Tokenizatoru burada saxlayırıq
+cihaz = ('cuda' if (TORCH_VAR and torch.cuda.is_available()) else 'cpu') if TORCH_VAR else 'cpu'
 tokenizator = None
 ismayil_modeli = None
 
 def ai_ni_bashlat():
-    """ 
-    Modeli və Tokenizatoru yaddaşdan yükləyən funksiya.
-    Əgər model təlim olunmayıbsa, False qaytarır.
     """
+    Modeli və Tokenizatoru yaddaşdan yükləyən funksiya.
+    Torch və ya model faylı yoxdursa False qaytarır (Railway-də normal haldir).
+    """  
+    if not TORCH_VAR or not MODEL_VAR:
+        return False  # Railway-də torch/model yoxdur — chat endpoint disabled
     global tokenizator, ismayil_modeli
     if ismayil_modeli is None:
         # Faylların varlığını yoxlayırıq
