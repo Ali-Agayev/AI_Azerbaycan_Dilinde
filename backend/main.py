@@ -28,11 +28,10 @@ from kaggle_client import is_gondər, is_veziyyeti, is_siyahisi
 ismayil_server = FastAPI(title="İsmayılın Şəxsi AI Serveri")
 
 # CORS tənzimləmələri
-# FRONTEND_URL env var-ı Railway + Vercel birlikdə istifadə üçün
-_frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:5173")
+# Bütün mənbələrə icazə veririk ki, Vercel rahat qoşulsun
 ismayil_server.add_middleware(
     CORSMiddleware,
-    allow_origins=[_frontend_url, "http://localhost:5173", "http://localhost:3000"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
