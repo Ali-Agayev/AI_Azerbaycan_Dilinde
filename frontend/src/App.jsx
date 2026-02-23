@@ -353,20 +353,7 @@ function App() {
                 )}
               </button>
 
-              {/* Kaggle Notebook təlimatı */}
-              {isId && isVeziyyeti?.status !== 'done' && (
-                <div className="kaggle-info">
-                  <p>📋 <strong>İş ID:</strong> <code>{isId}</code></p>
-                  <ol>
-                    <li><a href="https://kaggle.com" target="_blank" rel="noreferrer">Kaggle.com</a>-a gedin → Yeni Notebook yaradın</li>
-                    <li>⚙️ Settings → <strong>Accelerator = GPU T4</strong> + <strong>Internet = ON</strong></li>
-                    <li><code>video_jobs/{isId}/</code> qovluğundakı faylları Dataset kimi yükləyin</li>
-                    <li><code>video_edit_worker.py</code> kodunu notebook-a yapışdırın</li>
-                    <li><code>INPUT_VIDEO_YOLU</code> və <code>PROMPT</code>-u dəyişin, işlədin</li>
-                    <li>Nəticə <code>output.mp4</code>-ı <code>video_jobs/{isId}/output.mp4</code>-a kopyalayın</li>
-                  </ol>
-                </div>
-              )}
+              {/* Kaggle Notebook təlimatı silindi — artıq 100% avtomatikdir */}
 
               {/* Status göstəricisi */}
               {isVeziyyeti && (
@@ -379,13 +366,21 @@ function App() {
                       {statusMetni[isVeziyyeti.status] || isVeziyyeti.status}
                     </span>
                   </div>
-                  {isVeziyyeti.status === 'done' && (
+
+                  {isVeziyyeti.status === 'error' && isVeziyyeti.error && (
+                    <div style={{ marginTop: '10px', fontSize: '13px', color: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', padding: '10px', borderRadius: '6px', whiteSpace: 'pre-wrap' }}>
+                      <strong>XƏTA DETALI:</strong><br />
+                      {isVeziyyeti.error}
+                    </div>
+                  )}
+
+                  {isVeziyyeti.status === 'done' && isVeziyyeti.video_url && (
                     <a
+                      href={`https://aiazerbaycandilinde-production.up.railway.app${isVeziyyeti.video_url}`}
+                      target="_blank" rel="noreferrer"
                       className="download-btn"
-                      href={`http://localhost:8000/video/download/${isId}`}
-                      download
                     >
-                      <Download size={18} /> Videonu Yüklə
+                      <Download size={18} /> Nəticəni Yüklə
                     </a>
                   )}
                 </div>
