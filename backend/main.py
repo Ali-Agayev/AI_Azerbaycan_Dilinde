@@ -87,7 +87,17 @@ async def chat_cavabi(istek: ChatIsteyi):
     """
     # AI-nin hazır olub-olmadığını yoxlayırıq
     if not ai_ni_bashlat():
-        raise HTTPException(status_code=503, detail="İsmayıl hələ təlim keçir və ya model tapılmadı.")
+        # Railway-də lokal model yoxdursa "bağışlayın" mock cavabı qaytarırıq (xəta verməkdən yaxşıdır)
+        return {
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": "Salam! Mən hazırda 'Video Düzəlt' rejimində, yüngül (Railway) serverdə işləyirəm. Öz 'Custom Transformer' beynim (PyTorch) bu serverə yüklənməyib. Mənlə real söhbət etmək üçün məni öz kompüterinizdə (Anaconda ilə) çalışdırın və ya 'Video Düzəlt' bölməsindən videomuzu hazırlayaq! 🎬"
+                    }
+                }
+            ]
+        }
         
     try:
         # İstifadəçinin son göndərdiyi sualı götürürük
