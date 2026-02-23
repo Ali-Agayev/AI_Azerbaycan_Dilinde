@@ -80,8 +80,8 @@ def _kaggle_api():
         )
 
     # Lazy import — yalnız bu nöqtədə import edirik
-    from kaggle.api.kaggle_api_extended import KaggleApiExtended
-    api = KaggleApiExtended()
+    from kaggle.api.kaggle_api_extended import KaggleApi
+    api = KaggleApi()
     api.authenticate()
     return api
 
